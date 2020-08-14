@@ -13,6 +13,7 @@ var enemyShooter, enemyGroup;
 var enemy_Image;
 var pointGroup;
 var bulletGroup;
+var bullet2Group;
 const play =  1;
 const end = 2;
 var gameState = 1;
@@ -21,7 +22,11 @@ var bg_image;
 var obstacle2Group;
 var point2Group;
 var gameOver, go, replay, r_image;
-var power;
+var power, power_Image;
+var angle;
+var astroid3_image, planet_image1;
+var enemyLife = 250;
+var bullet2_Image;
 
 function preload(){
   player_Image = loadImage("Images/player.png");
@@ -30,7 +35,6 @@ function preload(){
   playerDown_Image = loadImage("Images/playerDown.png");
 
   food_Image = loadImage("Images/food.png");
-  asteroid_Image1 = loadImage("Images/asteroidGrey.png");
   asteroid_Image2 = loadImage("Images/asteroidGrey2.png");
   asteroid_Image3 = loadImage("Images/asteroidOrange.png");
 
@@ -40,6 +44,7 @@ function preload(){
 
   enemy_Image = loadImage("Images/enemy.png");
   bullet_Image = loadImage("Images/bullet.png")
+  bullet2_Image = loadImage("Images/bullet2.png")
 
   soundFormats('mp3', 'ogg');
   bullet_sound = loadSound('gunsound.mp3')
@@ -47,6 +52,10 @@ function preload(){
   bg_image = loadImage("Images/space.png");
   gameOver = loadImage("Images/over.png");
   r_image = loadImage("Images/replay.png");
+  power_Image = loadImage("Images/gem.png");
+  astroid3_image = loadImage("Images/asteroid3.png");
+  planet_image1 = loadImage("Images/planet1.png");
+
 
 }
 
@@ -61,11 +70,14 @@ function setup() {
   pointGroup = new Group();
   point2Group = new Group();
   bulletGroup = new Group();
+  bullet2Group = new Group();
   obstacle2Group = new Group();
 
 
   player = createSprite(windowWidth/2,windowHeight/2,20,20);
   player.addImage(player_Image);
+  player.rotation = 360;
+  player.rotateToDirection = true;
 
   life1 = createSprite(windowWidth-105, windowHeight/13,20,20);
   life1.addImage(life1_Image);
@@ -95,8 +107,8 @@ function setup() {
   
   power = createSprite(random(windowWidth), random(windowHeight), 20,20);
   power.visible = false;
-  power.debug = true;
-  powe
+  power.addImage(power_Image);
+  power.scale = 0.1;
 
 }
 
@@ -105,25 +117,31 @@ function draw() {
 
   if(gameState===1){
 
+    bullet2();
+
   if(keyDown(UP_ARROW)){
-    player.velocityY = -7;
-    player.velocityX = 0;
+    player.rotation = player.rotation+10;
     player.addImage(player_Image);
+    player.velocityY = -6;
+    player.velocityX = 0;
   }
+
   if(keyDown(LEFT_ARROW)){
-    player.velocityX = -7;
+    player.rotation = player.rotation+70;
+    player.velocityX = -6;
     player.velocityY = 0;
-    player.addImage(playerLeft_Image);
+
   }
   if(keyDown(DOWN_ARROW)){
-    player.velocityY = 7;
+    player.rotation = player.rotation+70;
+    player.velocityY = 6;
     player.velocityX = 0;
-    player.addImage(playerDown_Image);
+  
   }
   if(keyDown(RIGHT_ARROW)){
-    player.velocityX = 7;
+    player.rotation = player.rotation+70;
+    player.velocityX = 6;
     player.velocityY = 0;
-    player.addImage(playerRight_Image);
   }
 
   player.bounceOff(edges);
@@ -146,9 +164,14 @@ function draw() {
      player.y = windowHeight/2;
      player.addImage(player_Image);
      pointGroup.destroyEach();
-  }
+  } 
 
   bullets();
+
+  if(bullet2Group.isTouching(enemyShooter)){
+    enemyLife = enemyLife -5;
+   }
+   console.log(enemyLife);
 
   if(lifeCount===2){
     life3.visible = false;
@@ -171,9 +194,14 @@ function draw() {
   obstacles2();
   food();
 
+
   if(score>0){
     enemyShooter.visible = true;
   }
+  if(enemyLife<0){
+   enemyShooter.visible = false;
+  }
+
   enemyShooter.bounceOff(edges);
   
 
@@ -189,6 +217,7 @@ function draw() {
     bulletGroup.destroyEach();
     obstacle2Group.destroyEach();
     power.visible = false;
+    enemyLife = 250;
   }
 }
  else if(gameState===2){
@@ -234,20 +263,26 @@ function obstacles(){
       obstacle.velocityX = 3
     }
 
-    var rand2 = Math.round(random(1,3));
+    var rand2 = Math.round(random(1,4));
 
-    if(rand2===1){
-      obstacle.addImage(asteroid_Image1);
-      obstacle.scale = 0.5;
-    }
-    else if(rand2===2){
+    
+     if(rand2===1){
       obstacle.addImage(asteroid_Image2);
       obstacle.scale = 0.5;
     }
-    else if(rand2===3){
+    else if(rand2===2){
       obstacle.addImage(asteroid_Image3);
       obstacle.scale = 0.5;
     }
+    else if(rand2===3){
+      obstacle.addImage(astroid3_image);
+      obstacle.scale = 0.2;
+    }
+    else if(rand2===4){
+      obstacle.addImage(planet_image1);
+      obstacle.scale = 0.2;
+    }
+    
 
     obstacleGroup.add(obstacle);
 
@@ -278,7 +313,12 @@ function bullets(){
     bullets.velocityX = 0;
     bullets.velocityY = 17;
     bullet_sound.play();
-    bulletGroup.add(bullets); 
+    bulletGroup.add(bullets);
+    
+    if(enemyLife<0){
+      bullets.visible = false;
+      bullet_sound.stop();
+     }
    }
 }
 function obstacles2(){
@@ -295,21 +335,24 @@ function obstacles2(){
       obstacle2.velocityY = 3
     }
 
-    var rand2 = Math.round(random(1,3));
+    var rand2 = Math.round(random(1,4));
 
     if(rand2===1){
-      obstacle2.addImage(asteroid_Image1);
-      obstacle2.scale = 0.5;
+      obstacle.addImage(asteroid_Image2);
+      obstacle.scale = 0.5;
     }
     else if(rand2===2){
-      obstacle2.addImage(asteroid_Image2);
-      obstacle2.scale = 0.5;
+      obstacle.addImage(asteroid_Image3);
+      obstacle.scale = 0.5;
     }
     else if(rand2===3){
-      obstacle2.addImage(asteroid_Image3);
-      obstacle2.scale = 0.5;
+      obstacle.addImage(astroid3_image);
+      obstacle.scale = 0.2;
     }
-
+    else if(rand2===4){
+      obstacle.addImage(planet_image1);
+      obstacle.scale = 0.2;
+    }
     obstacle2Group.add(obstacle2);
 
     var point2 = createSprite(0, 0, 1,1);
@@ -320,4 +363,16 @@ function obstacles2(){
     point2Group.add(point2);
   }
 
+}
+function bullet2(){
+  if(score>1 && frameCount%10===0 && keyDown("SPACE")){
+    var bullets  = createSprite(player.x, player.y, 10,10);
+    bullets.addImage(bullet2_Image);
+    bullets.scale = 0.1;
+    bullets.velocityX = 0;
+    bullets.velocityY = -15;
+    bullet_sound.play();
+    bullet2Group.add(bullets); 
+
+   }
 }
